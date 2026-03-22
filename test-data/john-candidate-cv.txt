@@ -1,0 +1,56 @@
+JOHN CANDIDATE
+Senior Frontend Developer
+Email: john.candidate@email.com | Phone: +91-9876543210 | LinkedIn: linkedin.com/in/johncandidate
+Location: Bangalore, India
+
+PROFESSIONAL SUMMARY
+Result-driven frontend developer with 6 years of experience building scalable web applications using React.js, TypeScript, and modern JavaScript. Passionate about clean code, performance optimization, and delivering exceptional user experiences. Led frontend development for products serving 500K+ monthly active users.
+
+TECHNICAL SKILLS
+- Languages: TypeScript, JavaScript (ES6+), HTML5, CSS3, Python (basic)
+- Frameworks: React.js, Next.js, Redux, Zustand, React Query
+- Styling: Tailwind CSS, Styled Components, SCSS, Material UI
+- Testing: Jest, React Testing Library, Cypress
+- Tools: Git, Webpack, Vite, Docker, Figma
+- Cloud: AWS (S3, CloudFront, Lambda basics), Firebase
+- CI/CD: GitHub Actions, Jenkins
+- Other: REST APIs, GraphQL, WebSockets, Agile/Scrum
+
+WORK EXPERIENCE
+
+Senior Frontend Developer | TechNova Solutions, Bangalore
+March 2022 - Present
+- Lead a team of 4 frontend developers building a B2B SaaS analytics dashboard
+- Architected the frontend using React 18 + TypeScript + Zustand, reducing bundle size by 40%
+- Implemented real-time data streaming using WebSockets for live dashboard updates
+- Built a shared component library (50+ components) used across 3 products
+- Improved Lighthouse performance score from 62 to 94 through code splitting and lazy loading
+- Set up CI/CD pipeline with GitHub Actions reducing deployment time from 45 min to 8 min
+- Mentored 2 junior developers through weekly code reviews and pair programming sessions
+
+Frontend Developer | WebCraft Technologies, Hyderabad
+June 2020 - February 2022
+- Developed customer-facing e-commerce platform using React.js and Redux
+- Integrated 15+ REST APIs for product catalog, cart, checkout, and payment flows
+- Implemented responsive designs achieving cross-browser compatibility
+- Wrote 200+ unit tests using Jest and React Testing Library (85% code coverage)
+- Migrated legacy jQuery codebase to React, improving page load time by 60%
+- Collaborated with UX team to implement A/B testing framework
+
+Junior Developer | StartupHub, Bangalore
+July 2019 - May 2020
+- Built internal tools and admin dashboards using React.js
+- Developed reusable form components with validation using Formik and Yup
+- Participated in agile ceremonies and contributed to sprint planning
+
+EDUCATION
+Bachelor of Technology in Computer Science
+National Institute of Technology, Warangal | 2015 - 2019 | CGPA: 8.4/10
+
+CERTIFICATIONS
+- AWS Certified Cloud Practitioner (2023)
+- Meta Front-End Developer Professional Certificate (2022)
+
+PROJECTS
+- Open Source: Contributed to react-query and tailwindcss-typography plugin
+- Personal: Built a real-time collaborative whiteboard app using React + WebSockets + Canvas API

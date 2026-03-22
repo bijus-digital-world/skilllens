@@ -1,0 +1,40 @@
+Job Title: Senior React Developer
+Location: Bangalore, India (Hybrid)
+Experience: 5-8 years
+
+About the Role:
+We are looking for a Senior React Developer to join our product engineering team. You will be responsible for building and maintaining high-performance, scalable web applications that serve millions of users.
+
+Key Responsibilities:
+- Architect and build complex front-end applications using React.js and TypeScript
+- Design and implement reusable component libraries and design systems
+- Integrate RESTful APIs and WebSocket-based real-time features
+- Optimize application performance (lazy loading, code splitting, memoization)
+- Write unit and integration tests using Jest and React Testing Library
+- Collaborate with UX designers, backend engineers, and product managers
+- Mentor junior developers through code reviews and pair programming
+- Contribute to technical decision-making and architectural discussions
+
+Required Skills:
+- 5+ years of professional experience with React.js
+- Strong proficiency in TypeScript and modern JavaScript (ES6+)
+- Deep understanding of React hooks, context, and state management (Redux/Zustand)
+- Experience with build tools: Webpack, Vite, or similar
+- Proficiency with CSS-in-JS, Tailwind CSS, or SCSS
+- Experience with REST APIs, GraphQL, or WebSocket integration
+- Familiarity with CI/CD pipelines (GitHub Actions, Jenkins)
+- Strong understanding of web performance optimization techniques
+- Experience with Git and collaborative development workflows
+
+Nice to Have:
+- Experience with Next.js or server-side rendering
+- Familiarity with AWS services (S3, CloudFront, Lambda)
+- Experience with micro-frontend architecture
+- Knowledge of accessibility standards (WCAG 2.1)
+- Contributions to open-source projects
+
+What We Offer:
+- Competitive salary with annual performance bonuses
+- Flexible hybrid work model
+- Learning and development budget
+- Health insurance for you and your family

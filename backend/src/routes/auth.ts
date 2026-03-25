@@ -67,8 +67,8 @@ router.post('/register', authLimiter, async (req: Request, res: Response): Promi
       return
     }
 
-    const validRoles = ['admin', 'candidate']
-    const userRole = validRoles.includes(role) ? role : 'candidate'
+    // Public registration is always candidate. Admin accounts are created internally.
+    const userRole = 'candidate'
 
     // Check if user exists
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email])

@@ -4,14 +4,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AuthLayout } from '@/components/AuthLayout'
-import type { UserRole } from '@/types/auth'
 
 export function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole] = useState<UserRole>('candidate')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
@@ -32,8 +30,8 @@ export function RegisterPage() {
 
     setLoading(true)
     try {
-      const res = await register(email, password, name, role)
-      navigate(res.user.role === 'admin' ? '/admin' : '/candidate')
+      await register(email, password, name, 'candidate')
+      navigate('/candidate')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
@@ -42,7 +40,7 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Create your account" subtitle="Get started with SkillLens">
+    <AuthLayout title="Create your account" subtitle="Sign up to attend your scheduled interviews">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="rounded-lg bg-red-50 border border-red-100 p-3.5 text-sm text-red-600">
@@ -84,33 +82,6 @@ export function RegisterPage() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
         />
-        <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-slate-700">I am a</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setRole('candidate')}
-              className={`flex items-center justify-center rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-all cursor-pointer ${
-                role === 'candidate'
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-slate-200 text-slate-600 hover:border-slate-300'
-              }`}
-            >
-              Candidate
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('admin')}
-              className={`flex items-center justify-center rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-all cursor-pointer ${
-                role === 'admin'
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-slate-200 text-slate-600 hover:border-slate-300'
-              }`}
-            >
-              Admin
-            </button>
-          </div>
-        </div>
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
           {loading ? 'Creating account...' : 'Create account'}
         </Button>

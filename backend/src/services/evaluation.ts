@@ -87,11 +87,12 @@ export function buildEvaluationPrompt(
   experienceLevel?: string
 ): string {
   const cats = categories || [
-    { name: 'Technical Competency', weight: 30, description: 'Depth and accuracy of technical knowledge relevant to the role' },
+    { name: 'Technical Competency', weight: 25, description: 'Depth and accuracy of technical knowledge relevant to the role' },
     { name: 'Problem Solving', weight: 25, description: 'Approach to problems — clarifying questions, structured thinking, trade-off analysis' },
     { name: 'Communication', weight: 20, description: 'Clarity of explanation, ability to articulate thoughts, organized responses' },
     { name: 'Relevant Experience', weight: 15, description: 'Depth of hands-on experience relevant to the JD, with specific examples' },
     { name: 'Role Fit', weight: 10, description: 'Alignment with role expectations — seniority level, domain, team dynamics' },
+    { name: 'Attitude', weight: 5, description: 'Enthusiasm, willingness to learn, openness to feedback, intellectual humility, how they talk about previous teams and colleagues, response to challenging questions' },
   ]
   const categoryJson = cats.map((c) => `{"name": "${c.name}", "score": 0, "maxScore": 10, "weight": ${c.weight}, "comments": "...", "evidence": "...", "contentScore": 0, "deliveryScore": 0}`).join(',\n    ')
 

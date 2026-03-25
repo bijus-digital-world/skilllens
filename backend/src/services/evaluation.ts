@@ -29,10 +29,12 @@ export interface EvaluationResult {
   overallRating: number
   overallComments: string
   recommendation: 'Strong Hire' | 'Hire' | 'No Hire' | 'Strong No Hire'
-  confidenceLevel: 'high' | 'medium' | 'low'  // how confident is the evaluation
-  confidenceReason: string  // why confidence is what it is
-  followUpAreas: string[]   // topics to probe in next interview round
-  hintsNeeded: number       // how many times interviewer had to help/simplify
+  riskFactors: string[]     // what could go wrong if we hire this person
+  confidenceLevel: 'high' | 'medium' | 'low'
+  confidenceReason: string
+  followUpAreas: string[]
+  hintsNeeded: number
+  selfCorrectionCount: number  // times candidate caught their own mistakes (positive signal)
   highlights?: TranscriptHighlight[]
 }
 
@@ -120,31 +122,93 @@ Pass Threshold: ${threshold}/10
 
 === SCORING RULES (follow exactly) ===
 
+STEP 1: Score each category INDEPENDENTLY. Do NOT let a strong answer in one area inflate scores in another area (this is called the "halo effect" — avoid it). Evaluate each category as if it's the only thing you're scoring.
+
 For EACH category, provide THREE scores:
 1. "score" (0-10): Overall score for this category
 2. "contentScore" (1-4): WHAT they said — substance, accuracy, relevance, depth
-   - 4 = Strong Hire signal: thorough, accurate, demonstrates deep understanding
-   - 3 = Hire signal: adequate knowledge, correct approach, minor gaps
-   - 2 = No Hire signal: significant gaps, vague or generic answers
-   - 1 = Strong No Hire signal: incorrect, cannot answer, no relevant knowledge
+   - 4 = Strong Hire: thorough, accurate, specific examples with concrete details (metrics, names, technical specifics). Demonstrates understanding beyond the surface level.
+   - 3 = Hire: adequate knowledge, correct approach, minor gaps. Can explain concepts but lacks depth or specificity in examples.
+   - 2 = No Hire: significant gaps, vague or generic answers. Uses buzzwords without backing them up. Gives hypothetical answers when asked for real experience.
+   - 1 = Strong No Hire: incorrect, cannot answer, no relevant knowledge. Fundamental misunderstanding of concepts in their claimed area of expertise.
 3. "deliveryScore" (1-4): HOW they said it — clarity, structure, confidence
    - 4 = Articulate, well-structured, confident throughout
    - 3 = Clear enough, occasionally needs prompting
    - 2 = Disorganized, unclear, needed significant guidance
    - 1 = Could not articulate thoughts coherently
 
-IMPORTANT: Content and delivery are SEPARATE. A nervous candidate (deliveryScore=2) who gives technically accurate answers (contentScore=4) is VERY different from a confident candidate (deliveryScore=4) who gives wrong answers (contentScore=1). For technical roles, contentScore matters more.
+CRITICAL: Content and delivery are SEPARATE. NEVER let delivery override content.
+- Nervous but accurate (content=4, delivery=2) → STRONG candidate. Nervousness is not a predictor of job performance.
+- Confident but wrong (content=1, delivery=4) → WEAK candidate. Confidence without substance is the most common cause of bad hires.
+- For technical roles, weight contentScore 3-4x more than deliveryScore.
 
 "evidence" must be a SPECIFIC quote or paraphrase from the transcript. Not "candidate demonstrated good knowledge" — instead: "When asked about caching, candidate described implementing Redis with LRU eviction and TTL-based invalidation for their payment service."
 
 "comments" should explain WHY the score was given, referencing the evidence.
 
+=== DETECTING REHEARSED VS GENUINE ANSWERS ===
+
+Look for these signals and note them in your evaluation:
+
+REHEARSED (flag as yellow):
+- Perfect STAR structure from the first word with no pauses or self-correction
+- Generic examples that could apply to any company ("we improved performance")
+- Cannot go deeper when the interviewer asks follow-ups beyond the prepared answer
+- Uses exact phrasing from common interview prep resources
+
+GENUINE (positive signal):
+- Starts roughly then organizes thoughts — may self-correct mid-answer
+- Includes specific details: names, numbers, timelines, technology-specific details
+- Can answer unexpected follow-ups with the same level of detail
+- Includes emotional/contextual detail ("that was a stressful week because...")
+
+=== WHAT THEY DIDN'T SAY (evaluate meaningful absences) ===
+
+Note in your evaluation if the candidate:
+- Never mentioned testing, error handling, or edge cases (red flag for senior roles)
+- Always said "we" and never described their specific individual contribution
+- Never mentioned learning from failures or mistakes (may lack self-awareness)
+- Never mentioned collaboration or working with others (if role requires it)
+- Gave zero concrete metrics or numbers across the entire interview
+- Avoided answering a direct question by redirecting to a different topic
+
+Include these observations in the relevant category comments. A meaningful absence is as informative as what was said.
+
+=== "I DON'T KNOW" EVALUATION ===
+
+"I don't know" is NOT automatically negative. Score it based on context:
+
+POSITIVE "I don't know":
+- Followed by reasoning: "I haven't used that, but based on what I know about X, I'd guess..."
+- For genuinely obscure or niche knowledge outside their claimed expertise
+- Accompanied by honesty about knowledge boundaries: "I'm stronger in X than Y"
+- This shows intellectual humility — a strong predictor of on-the-job learning
+
+NEGATIVE "I don't know":
+- For fundamental concepts in their claimed area of expertise
+- Not followed by any attempt to reason through the problem
+- Repeated pattern across many questions (lack of preparation or depth)
+- For topics prominently listed on their own resume
+
 === OVERALL ASSESSMENT RULES ===
+
+Score each category independently FIRST. Then compute the overall assessment.
 
 "recommendation" MUST be one of: "Strong Hire", "Hire", "No Hire", "Strong No Hire"
 - DO NOT use "Maybe", "Leaning Hire", or any other variant
-- A single contentScore of 1 on a critical category should result in "No Hire" regardless of other scores (the Google rule)
-- The recommendation should align with the overall picture, not just the numerical average
+- A single contentScore of 1 on a critical category → "No Hire" regardless of other scores (the Google rule)
+- The recommendation should align with the overall profile, NOT just the numerical average
+- A candidate with scores of 9, 9, 9, and 2 is NOT the same as a candidate with all 7s — present the profile, not the average
+
+"riskFactors": List 1-3 specific risks of hiring this candidate. What could go wrong?
+- Example: "May struggle with system design at scale — all examples were small team/small codebase"
+- Example: "Strong individual contributor but no evidence of mentoring or leadership"
+- Example: "All experience is with one tech stack — may resist adopting new technologies"
+Even for strong candidates, identify risks. Every hire has risks.
+
+"trainability": For each weakness identified, note whether it's a SKILL gap (trainable) or a WILL gap (much harder to change):
+- Skill gap: "Hasn't used GraphQL but has strong API design fundamentals — could learn quickly"
+- Will gap: "Consistently dismissive of testing — may resist adopting team testing practices"
 
 "confidenceLevel" (high/medium/low): How confident are you in this evaluation?
 - "high": Clear signal — candidate clearly strong or clearly weak, enough data points
@@ -155,6 +219,8 @@ IMPORTANT: Content and delivery are SEPARATE. A nervous candidate (deliveryScore
 
 "followUpAreas": 1-3 specific topics that should be explored in a follow-up interview. Example: "System design — candidate mentioned experience but wasn't asked about it", "Testing practices — not covered in this interview"
 
+"selfCorrectionCount": How many times did the candidate catch and correct their own mistake during the interview? Self-correction is a STRONG positive signal — people who catch their own errors on the job are significantly more effective.
+
 === RESPONSE FORMAT ===
 
 Respond ONLY with valid JSON (no markdown, no code blocks):
@@ -162,14 +228,16 @@ Respond ONLY with valid JSON (no markdown, no code blocks):
   "categories": [
     ${categoryJson}
   ],
-  "strengths": ["Specific strength 1 with evidence", "Specific strength 2 with evidence"],
-  "weaknesses": ["Specific weakness 1 with evidence", "Specific weakness 2 with evidence"],
+  "strengths": ["Specific strength with evidence from the interview"],
+  "weaknesses": ["Specific weakness with evidence — note if it's a skill gap (trainable) or will gap"],
+  "riskFactors": ["What could go wrong if we hire this person — be specific"],
   "overallRating": 0,
-  "overallComments": "2-3 sentence assessment that a hiring manager can read without seeing the transcript and understand the candidate's level",
+  "overallComments": "2-3 sentence executive summary a hiring manager can read in 30 seconds and understand the candidate's level, key strengths, and key risks",
   "recommendation": "Strong Hire | Hire | No Hire | Strong No Hire",
   "confidenceLevel": "high | medium | low",
-  "confidenceReason": "Why this confidence level — e.g. 'Clear strong signal across all categories' or 'Mixed results, only 4 questions answered'",
+  "confidenceReason": "Why this confidence level",
   "hintsNeeded": 0,
+  "selfCorrectionCount": 0,
   "followUpAreas": ["Topic to explore in next round"],
   "highlights": [
     {"exchangeIndex": 0, "type": "strong", "note": "Specific observation about this exchange"},

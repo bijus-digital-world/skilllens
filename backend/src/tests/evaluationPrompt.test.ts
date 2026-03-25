@@ -101,7 +101,9 @@ describe('buildEvaluationPrompt', () => {
 
   it('enforces the Google rule — single low score = No Hire', () => {
     const prompt = buildEvaluationPrompt(jd, cv, transcript)
-    expect(prompt).toContain('contentScore of 1 on a critical category should result in "No Hire"')
+    expect(prompt).toContain('contentScore of 1 on a critical category')
+    expect(prompt).toContain('No Hire')
+    expect(prompt).toContain('Google rule')
   })
 
   it('prohibits Maybe recommendation', () => {

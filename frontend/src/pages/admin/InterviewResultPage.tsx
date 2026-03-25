@@ -179,6 +179,11 @@ export function InterviewResultPage() {
                           Interviewer had to simplify/redirect {evaluation.hintsNeeded} time{evaluation.hintsNeeded > 1 ? 's' : ''}
                         </p>
                       )}
+                      {evaluation.selfCorrectionCount != null && evaluation.selfCorrectionCount > 0 && (
+                        <p className="mt-1 text-xs text-emerald-600">
+                          Candidate self-corrected {evaluation.selfCorrectionCount} time{evaluation.selfCorrectionCount > 1 ? 's' : ''} (positive signal)
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -303,6 +308,28 @@ export function InterviewResultPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Risk Factors */}
+            {evaluation.riskFactors && evaluation.riskFactors.length > 0 && (
+              <Card className="border-red-100">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-red-700 text-base">
+                    <AlertTriangle className="h-4 w-4" /> Hiring Risks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-slate-400 mb-3">What could go wrong if we hire this candidate</p>
+                  <ul className="space-y-2">
+                    {evaluation.riskFactors.map((risk, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-600">!</span>
+                        {risk}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Follow-Up Areas */}
             {evaluation.followUpAreas && evaluation.followUpAreas.length > 0 && (

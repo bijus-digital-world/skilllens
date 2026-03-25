@@ -20,10 +20,12 @@ export interface EvaluationResult {
   overallRating: number
   overallComments: string
   recommendation: string
+  riskFactors?: string[]
   confidenceLevel?: 'high' | 'medium' | 'low'
   confidenceReason?: string
   followUpAreas?: string[]
   hintsNeeded?: number
+  selfCorrectionCount?: number
   highlights?: TranscriptHighlight[]
 }
 

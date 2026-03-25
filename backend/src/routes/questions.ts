@@ -27,8 +27,8 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
 
     // Fetch JD text
     const jdResult = await pool.query(
-      'SELECT title, extracted_text FROM job_descriptions WHERE id = $1 AND created_by = $2',
-      [jdId, req.user!.userId]
+      'SELECT title, extracted_text FROM job_descriptions WHERE id = $1 AND org_id = $2',
+      [jdId, req.user!.orgId]
     )
     if (jdResult.rows.length === 0) {
       res.status(404).json({ message: 'Job description not found' })
@@ -53,10 +53,10 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
 
     // Save to database
     const result = await pool.query(
-      `INSERT INTO question_sets (jd_id, cv_id, difficulty, question_count, questions, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO question_sets (jd_id, cv_id, difficulty, question_count, questions, created_by, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, difficulty, question_count, created_at`,
-      [jdId, cvId || null, difficulty, questionCount, JSON.stringify(questions), req.user!.userId]
+      [jdId, cvId || null, difficulty, questionCount, JSON.stringify(questions), req.user!.userId, req.user!.orgId]
     )
 
     res.status(201).json({
@@ -80,9 +80,9 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
        JOIN job_descriptions jd ON jd.id = qs.jd_id
        LEFT JOIN candidate_cvs cv ON cv.id = qs.cv_id
        LEFT JOIN users u ON u.id = cv.candidate_id
-       WHERE qs.created_by = $1
+       WHERE qs.org_id = $1
        ORDER BY qs.created_at DESC`,
-      [req.user!.userId]
+      [req.user!.orgId]
     )
     res.json(result.rows)
   } catch (err) {
@@ -102,7 +102,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
        LEFT JOIN candidate_cvs cv ON cv.id = qs.cv_id
        LEFT JOIN users u ON u.id = cv.candidate_id
        WHERE qs.id = $1 AND qs.created_by = $2`,
-      [req.params.id, req.user!.userId]
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Question set not found' })
@@ -119,8 +119,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      'DELETE FROM question_sets WHERE id = $1 AND created_by = $2 RETURNING id',
-      [req.params.id, req.user!.userId]
+      'DELETE FROM question_sets WHERE id = $1 AND org_id = $2 RETURNING id',
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Question set not found' })

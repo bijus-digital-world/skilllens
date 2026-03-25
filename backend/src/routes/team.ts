@@ -15,7 +15,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
       `SELECT id, email, name, role, is_self_registered, must_change_password, created_at
-       FROM users ORDER BY created_at DESC`
+       FROM users WHERE org_id = $1 ORDER BY created_at DESC`,
+      [req.user!.orgId]
     )
     res.json(result.rows)
   } catch (err) {
@@ -53,10 +54,10 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const passwordHash = await bcrypt.hash(tempPassword, 12)
 
     const result = await pool.query(
-      `INSERT INTO users (email, password_hash, name, role, must_change_password, is_self_registered, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO users (email, password_hash, name, role, must_change_password, is_self_registered, created_by, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, email, name, role, created_at`,
-      [email, passwordHash, name, role, true, false, req.user!.userId]
+      [email, passwordHash, name, role, true, false, req.user!.userId, req.user!.orgId]
     )
 
     // Send credentials email

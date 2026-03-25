@@ -52,10 +52,10 @@ router.post('/', authorize('admin'), async (req: Request, res: Response): Promis
     const end = new Date(start.getTime() + duration * 60 * 1000)
 
     const result = await pool.query(
-      `INSERT INTO interviews (candidate_id, jd_id, cv_id, scheduled_by, duration_minutes, scheduled_start, scheduled_end, profile_id, interviewer_name, adaptive_difficulty, initial_difficulty, persona, is_practice)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      `INSERT INTO interviews (candidate_id, jd_id, cv_id, scheduled_by, duration_minutes, scheduled_start, scheduled_end, profile_id, interviewer_name, adaptive_difficulty, initial_difficulty, persona, is_practice, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING id, candidate_id, jd_id, cv_id, status, duration_minutes, scheduled_start, scheduled_end, profile_id, interviewer_name, adaptive_difficulty, initial_difficulty, persona, is_practice, created_at`,
-      [candidateId, jdId, cvId, req.user!.userId, duration, start.toISOString(), end.toISOString(), profileId || null, pickInterviewerName(interviewerGender), adaptiveDifficulty ?? true, initialDifficulty || 'moderate', persona || 'friendly', isPractice ?? false]
+      [candidateId, jdId, cvId, req.user!.userId, duration, start.toISOString(), end.toISOString(), profileId || null, pickInterviewerName(interviewerGender), adaptiveDifficulty ?? true, initialDifficulty || 'moderate', persona || 'friendly', isPractice ?? false, req.user!.orgId]
     )
 
     const interview = result.rows[0]
@@ -104,8 +104,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 
     if (isAdmin) {
       const countResult = await pool.query(
-        'SELECT COUNT(*) FROM interviews WHERE scheduled_by = $1',
-        [req.user!.userId]
+        'SELECT COUNT(*) FROM interviews WHERE org_id = $1',
+        [req.user!.orgId]
       )
       const total = parseInt(countResult.rows[0].count, 10)
 
@@ -117,10 +117,10 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
          FROM interviews i
          JOIN users u ON u.id = i.candidate_id
          JOIN job_descriptions jd ON jd.id = i.jd_id
-         WHERE i.scheduled_by = $1
+         WHERE i.org_id = $1
          ORDER BY i.scheduled_start DESC
          LIMIT $2 OFFSET $3`,
-        [req.user!.userId, pagination.limit, pagination.offset]
+        [req.user!.orgId, pagination.limit, pagination.offset]
       )
       res.json(paginatedResponse(result.rows, total, pagination))
     } else {
@@ -160,9 +160,9 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
       JOIN users u ON u.id = i.candidate_id
       JOIN job_descriptions jd ON jd.id = i.jd_id
       JOIN candidate_cvs cv ON cv.id = i.cv_id
-      WHERE i.id = $1 AND ${isAdmin ? 'i.scheduled_by = $2' : 'i.candidate_id = $2'}
+      WHERE i.id = $1 AND ${isAdmin ? 'i.org_id = $2' : 'i.candidate_id = $2'}
     `
-    const result = await pool.query(query, [req.params.id, req.user!.userId])
+    const result = await pool.query(query, [req.params.id, isAdmin ? req.user!.orgId : req.user!.userId])
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Interview not found' })
       return
@@ -195,9 +195,9 @@ router.get('/compare/:jdId', authorize('admin'), async (req: Request, res: Respo
               u.name AS candidate_name, u.email AS candidate_email
        FROM interviews i
        JOIN users u ON u.id = i.candidate_id
-       WHERE i.jd_id = $1 AND i.scheduled_by = $2 AND i.status = 'completed' AND i.score IS NOT NULL
+       WHERE i.jd_id = $1 AND i.org_id = $2 AND i.status = 'completed' AND i.score IS NOT NULL
        ORDER BY i.overall_rating DESC`,
-      [req.params.jdId, req.user!.userId]
+      [req.params.jdId, req.user!.orgId]
     )
     res.json(result.rows)
   } catch (err) {
@@ -211,9 +211,9 @@ router.patch('/:id/cancel', authorize('admin'), async (req: Request, res: Respon
   try {
     const result = await pool.query(
       `UPDATE interviews SET status = 'cancelled', updated_at = NOW()
-       WHERE id = $1 AND scheduled_by = $2 AND status = 'scheduled'
+       WHERE id = $1 AND org_id = $2 AND status = 'scheduled'
        RETURNING id, status`,
-      [req.params.id, req.user!.userId]
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Interview not found or cannot be cancelled' })
@@ -235,8 +235,8 @@ router.get('/:id/report', authorize('admin'), async (req: Request, res: Response
        FROM interviews i
        JOIN users u ON u.id = i.candidate_id
        JOIN job_descriptions jd ON jd.id = i.jd_id
-       WHERE i.id = $1 AND i.scheduled_by = $2`,
-      [req.params.id, req.user!.userId]
+       WHERE i.id = $1 AND i.org_id = $2`,
+      [req.params.id, req.user!.orgId]
     )
 
     if (result.rows.length === 0) {

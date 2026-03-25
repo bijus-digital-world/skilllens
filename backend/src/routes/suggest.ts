@@ -36,10 +36,10 @@ router.post('/interview-config', async (req: Request, res: Response): Promise<vo
       // Find matching profile
       const profileResult = await pool.query(
         `SELECT id FROM evaluation_profiles
-         WHERE experience_level = $1 AND (is_preset = TRUE OR created_by = $2)
+         WHERE experience_level = $1 AND (is_preset = TRUE OR org_id = $2)
          ORDER BY is_preset DESC
          LIMIT 1`,
-        [analysis.suggestedProfile || 'mid', req.user!.userId]
+        [analysis.suggestedProfile || 'mid', req.user!.orgId]
       )
       if (profileResult.rows.length > 0) {
         suggestedProfile = profileResult.rows[0].id
@@ -67,10 +67,10 @@ router.post('/interview-config', async (req: Request, res: Response): Promise<vo
           // Override with CV-detected level
           const profileResult = await pool.query(
             `SELECT id FROM evaluation_profiles
-             WHERE experience_level = $1 AND (is_preset = TRUE OR created_by = $2)
+             WHERE experience_level = $1 AND (is_preset = TRUE OR org_id = $2)
              ORDER BY is_preset DESC
              LIMIT 1`,
-            [detectedLevel, req.user!.userId]
+            [detectedLevel, req.user!.orgId]
           )
           if (profileResult.rows.length > 0) {
             suggestedProfile = profileResult.rows[0].id

@@ -37,10 +37,10 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
     }
 
     const result = await pool.query(
-      `INSERT INTO job_descriptions (title, description, file_key, file_name, extracted_text, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO job_descriptions (title, description, file_key, file_name, extracted_text, created_by, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, title, description, file_name, created_at`,
-      [title, description || null, fileKey, fileName, extractedText, req.user!.userId]
+      [title, description || null, fileKey, fileName, extractedText, req.user!.userId, req.user!.orgId]
     )
 
     const jd = result.rows[0]
@@ -65,17 +65,17 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     const pagination = parsePagination(req)
 
     const countResult = await pool.query(
-      'SELECT COUNT(*) FROM job_descriptions WHERE created_by = $1',
-      [req.user!.userId]
+      'SELECT COUNT(*) FROM job_descriptions WHERE org_id = $1',
+      [req.user!.orgId]
     )
     const total = parseInt(countResult.rows[0].count, 10)
 
     const result = await pool.query(
       `SELECT id, title, description, file_name, created_at, analysis IS NOT NULL as has_analysis
-       FROM job_descriptions WHERE created_by = $1
+       FROM job_descriptions WHERE org_id = $1
        ORDER BY created_at DESC
        LIMIT $2 OFFSET $3`,
-      [req.user!.userId, pagination.limit, pagination.offset]
+      [req.user!.orgId, pagination.limit, pagination.offset]
     )
     res.json(paginatedResponse(result.rows, total, pagination))
   } catch (err) {
@@ -89,8 +89,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
       `SELECT id, title, description, file_name, extracted_text, analysis, created_at
-       FROM job_descriptions WHERE id = $1 AND created_by = $2`,
-      [req.params.id, req.user!.userId]
+       FROM job_descriptions WHERE id = $1 AND org_id = $2`,
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Job description not found' })
@@ -107,8 +107,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 router.post('/:id/analyze', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      'SELECT id, extracted_text FROM job_descriptions WHERE id = $1 AND created_by = $2',
-      [req.params.id, req.user!.userId]
+      'SELECT id, extracted_text FROM job_descriptions WHERE id = $1 AND org_id = $2',
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Job description not found' })
@@ -142,8 +142,8 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
     }
 
     const result = await pool.query(
-      'DELETE FROM job_descriptions WHERE id = $1 AND created_by = $2 RETURNING file_key',
-      [req.params.id, req.user!.userId]
+      'DELETE FROM job_descriptions WHERE id = $1 AND org_id = $2 RETURNING file_key',
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Job description not found' })

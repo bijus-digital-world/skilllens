@@ -43,10 +43,10 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
     }
 
     const result = await pool.query(
-      `INSERT INTO candidate_cvs (candidate_id, file_key, file_name, extracted_text, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO candidate_cvs (candidate_id, file_key, file_name, extracted_text, created_by, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, candidate_id, file_name, created_at`,
-      [candidateId, file.filename, file.originalname, extractedText, req.user!.userId]
+      [candidateId, file.filename, file.originalname, extractedText, req.user!.userId, req.user!.orgId]
     )
 
     res.status(201).json(result.rows[0])
@@ -62,13 +62,13 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     const { candidateId } = req.query
     const pagination = parsePagination(req)
 
-    let countQuery = 'SELECT COUNT(*) FROM candidate_cvs cv WHERE cv.created_by = $1'
+    let countQuery = 'SELECT COUNT(*) FROM candidate_cvs cv WHERE cv.org_id = $1'
     let query = `SELECT cv.id, cv.candidate_id, cv.file_name, cv.created_at, u.name as candidate_name, u.email as candidate_email
                  FROM candidate_cvs cv
                  JOIN users u ON u.id = cv.candidate_id
-                 WHERE cv.created_by = $1`
-    const params: unknown[] = [req.user!.userId]
-    const countParams: unknown[] = [req.user!.userId]
+                 WHERE cv.org_id = $1`
+    const params: unknown[] = [req.user!.orgId]
+    const countParams: unknown[] = [req.user!.orgId]
 
     if (candidateId) {
       countQuery += ' AND cv.candidate_id = $2'
@@ -106,7 +106,7 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
     }
 
     const result = await pool.query(
-      'DELETE FROM candidate_cvs WHERE id = $1 AND created_by = $2 RETURNING file_key',
+      'DELETE FROM candidate_cvs WHERE id = $1 AND org_id = $2 RETURNING file_key',
       [req.params.id, req.user!.userId]
     )
     if (result.rows.length === 0) {

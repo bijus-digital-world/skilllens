@@ -7,10 +7,11 @@ const router = Router()
 router.use(authenticate, authorize('admin'))
 
 // GET /api/candidates — list all candidates
-router.get('/', async (_req: Request, res: Response): Promise<void> => {
+router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      "SELECT id, email, name, created_at FROM users WHERE role = 'candidate' ORDER BY name ASC"
+      "SELECT id, email, name, created_at FROM users WHERE role = 'candidate' AND org_id = $1 ORDER BY name ASC",
+      [req.user!.orgId]
     )
     res.json(result.rows)
   } catch (err) {

@@ -12,9 +12,9 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     const result = await pool.query(
       `SELECT id, name, description, experience_level, role_type, domain, categories, strictness, pass_threshold, is_preset, created_at
        FROM evaluation_profiles
-       WHERE is_preset = TRUE OR created_by = $1
+       WHERE is_preset = TRUE OR org_id = $1
        ORDER BY is_preset DESC, experience_level ASC, created_at DESC`,
-      [req.user!.userId]
+      [req.user!.orgId]
     )
     res.json(result.rows)
   } catch (err) {
@@ -27,8 +27,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      `SELECT * FROM evaluation_profiles WHERE id = $1 AND (is_preset = TRUE OR created_by = $2)`,
-      [req.params.id, req.user!.userId]
+      `SELECT * FROM evaluation_profiles WHERE id = $1 AND (is_preset = TRUE OR org_id = $2)`,
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Profile not found' })
@@ -59,8 +59,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     }
 
     const result = await pool.query(
-      `INSERT INTO evaluation_profiles (name, description, experience_level, role_type, domain, categories, strictness, pass_threshold, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO evaluation_profiles (name, description, experience_level, role_type, domain, categories, strictness, pass_threshold, created_by, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id, name, description, experience_level, role_type, domain, categories, strictness, pass_threshold, created_at`,
       [
         name,
@@ -72,6 +72,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         strictness || 'moderate',
         passThreshold || 6.0,
         req.user!.userId,
+        req.user!.orgId,
       ]
     )
 
@@ -105,9 +106,9 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
       `UPDATE evaluation_profiles
        SET name = $1, description = $2, experience_level = $3, role_type = $4, domain = $5,
            categories = $6, strictness = $7, pass_threshold = $8, updated_at = NOW()
-       WHERE id = $9 AND created_by = $10
+       WHERE id = $9 AND org_id = $10
        RETURNING *`,
-      [name, description, experienceLevel, roleType, domain, JSON.stringify(categories), strictness, passThreshold, req.params.id, req.user!.userId]
+      [name, description, experienceLevel, roleType, domain, JSON.stringify(categories), strictness, passThreshold, req.params.id, req.user!.orgId]
     )
 
     if (result.rows.length === 0) {
@@ -125,8 +126,8 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
 router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      'DELETE FROM evaluation_profiles WHERE id = $1 AND created_by = $2 AND is_preset = FALSE RETURNING id',
-      [req.params.id, req.user!.userId]
+      'DELETE FROM evaluation_profiles WHERE id = $1 AND org_id = $2 AND is_preset = FALSE RETURNING id',
+      [req.params.id, req.user!.orgId]
     )
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Profile not found or is a preset' })

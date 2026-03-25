@@ -78,14 +78,18 @@ router.post('/register', authLimiter, async (req: Request, res: Response): Promi
     }
 
     // Hash password and create user (self-registered)
+    // Assign to default org (self-registered users get practice mode)
+    const defaultOrg = await pool.query("SELECT id FROM organizations WHERE slug = 'default' LIMIT 1")
+    const orgId = defaultOrg.rows[0]?.id || null
+
     const passwordHash = await bcrypt.hash(password, 12)
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name, role, is_self_registered) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role, created_at',
-      [email, passwordHash, name, userRole, true]
+      'INSERT INTO users (email, password_hash, name, role, is_self_registered, org_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, email, name, role, org_id, created_at',
+      [email, passwordHash, name, userRole, true, orgId]
     )
 
     const user = result.rows[0]
-    const token = createToken({ userId: user.id, email: user.email, role: user.role })
+    const token = createToken({ userId: user.id, email: user.email, role: user.role, orgId: user.org_id })
     setTokenCookie(res, token)
 
     res.status(201).json({
@@ -121,7 +125,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response): Promise<
     }
 
     const result = await pool.query(
-      'SELECT id, email, password_hash, name, role, must_change_password, created_at FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, must_change_password, org_id, created_at FROM users WHERE email = $1',
       [email]
     )
 
@@ -138,7 +142,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response): Promise<
       return
     }
 
-    const token = createToken({ userId: user.id, email: user.email, role: user.role })
+    const token = createToken({ userId: user.id, email: user.email, role: user.role, orgId: user.org_id })
     setTokenCookie(res, token)
 
     res.json({

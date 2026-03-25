@@ -51,14 +51,21 @@ async function migrate() {
       }
     }
 
-    // Seed default admin if no admin exists
+    // Seed default org and admin if no admin exists
     const adminCheck = await client.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1")
     if (adminCheck.rows.length === 0) {
-      const defaultPassword = crypto.randomBytes(6).toString('base64url') // e.g. "aB3dE5fG"
+      // Create default organization
+      const orgResult = await client.query(
+        "INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id",
+        ['Default Organization', 'default']
+      )
+      const orgId = orgResult.rows[0].id
+
+      const defaultPassword = crypto.randomBytes(6).toString('base64url')
       const hash = await bcrypt.hash(defaultPassword, 12)
       await client.query(
-        "INSERT INTO users (email, password_hash, name, role, must_change_password, is_self_registered) VALUES ($1, $2, $3, $4, $5, $6)",
-        ['admin@skilllens.com', hash, 'System Admin', 'admin', true, false]
+        "INSERT INTO users (email, password_hash, name, role, must_change_password, is_self_registered, org_id) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        ['admin@skilllens.com', hash, 'System Admin', 'admin', true, false, orgId]
       )
       console.log('')
       console.log('  ╔══════════════════════════════════════════════════╗')
@@ -70,6 +77,17 @@ async function migrate() {
       console.log('  ║  ⚠ You must change this password on first login ║')
       console.log('  ╚══════════════════════════════════════════════════╝')
       console.log('')
+    }
+
+    // Backfill: assign orphaned users to default org
+    const defaultOrg = await client.query("SELECT id FROM organizations WHERE slug = 'default' LIMIT 1")
+    if (defaultOrg.rows.length > 0) {
+      await client.query("UPDATE users SET org_id = $1 WHERE org_id IS NULL", [defaultOrg.rows[0].id])
+      await client.query("UPDATE job_descriptions SET org_id = $1 WHERE org_id IS NULL", [defaultOrg.rows[0].id])
+      await client.query("UPDATE candidate_cvs SET org_id = $1 WHERE org_id IS NULL", [defaultOrg.rows[0].id])
+      await client.query("UPDATE interviews SET org_id = $1 WHERE org_id IS NULL", [defaultOrg.rows[0].id])
+      await client.query("UPDATE question_sets SET org_id = $1 WHERE org_id IS NULL", [defaultOrg.rows[0].id])
+      await client.query("UPDATE evaluation_profiles SET org_id = $1 WHERE org_id IS NULL AND is_preset = false", [defaultOrg.rows[0].id])
     }
 
     console.log('Migrations complete')

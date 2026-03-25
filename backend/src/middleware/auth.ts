@@ -6,6 +6,7 @@ export interface JwtPayload {
   userId: string
   email: string
   role: 'admin' | 'candidate'
+  orgId: string
 }
 
 declare global {

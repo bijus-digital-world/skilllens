@@ -9,10 +9,9 @@ router.use(authenticate, authorize('admin'))
 // GET /api/dashboard/stats
 router.get('/stats', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user!.userId
+    const orgId = req.user!.orgId
 
     const [counts, candidates, avgScore, recent] = await Promise.all([
-      // Interview counts by status
       pool.query(
         `SELECT
            COUNT(*) FILTER (WHERE status = 'scheduled') AS scheduled,
@@ -20,17 +19,14 @@ router.get('/stats', async (req: Request, res: Response): Promise<void> => {
            COUNT(*) FILTER (WHERE status = 'completed') AS completed,
            COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled,
            COUNT(*) AS total
-         FROM interviews WHERE scheduled_by = $1`,
-        [userId]
+         FROM interviews WHERE org_id = $1`,
+        [orgId]
       ),
-      // Total candidates
-      pool.query("SELECT COUNT(*) AS count FROM users WHERE role = 'candidate'"),
-      // Average score
+      pool.query("SELECT COUNT(*) AS count FROM users WHERE role = 'candidate' AND org_id = $1", [orgId]),
       pool.query(
-        'SELECT ROUND(AVG(overall_rating)::numeric, 1) AS avg FROM interviews WHERE scheduled_by = $1 AND overall_rating IS NOT NULL',
-        [userId]
+        'SELECT ROUND(AVG(overall_rating)::numeric, 1) AS avg FROM interviews WHERE org_id = $1 AND overall_rating IS NOT NULL',
+        [orgId]
       ),
-      // Recent interviews
       pool.query(
         `SELECT i.id, i.status, i.scheduled_start, i.overall_rating, i.duration_minutes,
                 u.name AS candidate_name, u.email AS candidate_email,
@@ -38,10 +34,10 @@ router.get('/stats', async (req: Request, res: Response): Promise<void> => {
          FROM interviews i
          JOIN users u ON u.id = i.candidate_id
          JOIN job_descriptions jd ON jd.id = i.jd_id
-         WHERE i.scheduled_by = $1
+         WHERE i.org_id = $1
          ORDER BY i.created_at DESC
          LIMIT 10`,
-        [userId]
+        [orgId]
       ),
     ])
 
@@ -64,9 +60,9 @@ router.get('/stats', async (req: Request, res: Response): Promise<void> => {
       const top = await pool.query(
         `SELECT u.name, i.overall_rating FROM interviews i
          JOIN users u ON u.id = i.candidate_id
-         WHERE i.scheduled_by = $1 AND i.overall_rating IS NOT NULL
+         WHERE i.org_id = $1 AND i.overall_rating IS NOT NULL
          ORDER BY i.overall_rating DESC LIMIT 1`,
-        [userId]
+        [orgId]
       )
       if (top.rows.length > 0) {
         insights.push(`Top performer: ${top.rows[0].name} scored ${top.rows[0].overall_rating}/10`)

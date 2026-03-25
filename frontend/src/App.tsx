@@ -29,6 +29,7 @@ import { TeamPage } from '@/pages/admin/TeamPage'
 import { PrepRoom } from '@/pages/candidate/PrepRoom'
 import { FeedbackPage } from '@/pages/candidate/FeedbackPage'
 import { ToastProvider } from '@/components/ui/Toast'
+import { LandingPage } from '@/pages/LandingPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,7 +115,8 @@ function AppRoutes() {
         />
       </Route>
 
-      <Route path="*" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/candidate') : '/login'} />} />
+      <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/candidate'} /> : <LandingPage />} />
+      <Route path="*" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/candidate') : '/'} />} />
     </Routes>
   )
 }

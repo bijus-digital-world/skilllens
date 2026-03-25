@@ -8,6 +8,7 @@ import { config } from '../config'
 import { authenticate, type JwtPayload } from '../middleware/auth'
 import { sanitizeString, sanitizeName, isValidEmail } from '../utils/validate'
 import { sendPasswordResetEmail } from '../services/emailService'
+import { logAudit } from '../services/auditLog'
 
 const router = Router()
 
@@ -92,6 +93,8 @@ router.post('/register', authLimiter, async (req: Request, res: Response): Promi
     const token = createToken({ userId: user.id, email: user.email, role: user.role, orgId: user.org_id })
     setTokenCookie(res, token)
 
+    logAudit(req, 'user.register', 'user', user.id, { email, role: userRole })
+
     res.status(201).json({
       user: {
         id: user.id,
@@ -144,6 +147,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response): Promise<
 
     const token = createToken({ userId: user.id, email: user.email, role: user.role, orgId: user.org_id })
     setTokenCookie(res, token)
+    logAudit(req, 'user.login', 'user', user.id, { email })
 
     res.json({
       user: {

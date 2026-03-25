@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs'
 import { parsePagination, paginatedResponse } from '../utils/pagination'
 import { isValidUUID, validateInt, isOneOf } from '../utils/validate'
 import { pickInterviewerName } from '../services/interviewHandler'
+import { logAudit } from '../services/auditLog'
 
 const router = Router()
 
@@ -88,6 +89,7 @@ router.post('/', authorize('admin'), async (req: Request, res: Response): Promis
       }
     }).catch(() => {})
 
+    logAudit(req, 'interview.scheduled', 'interview', interview.id, { candidateId, jdId, duration })
     res.status(201).json(interview)
   } catch (err) {
     console.error('Schedule interview error:', err)
@@ -219,6 +221,7 @@ router.patch('/:id/cancel', authorize('admin'), async (req: Request, res: Respon
       res.status(404).json({ message: 'Interview not found or cannot be cancelled' })
       return
     }
+    logAudit(req, 'interview.cancelled', 'interview', req.params.id as string)
     res.json(result.rows[0])
   } catch (err) {
     console.error('Cancel interview error:', err)

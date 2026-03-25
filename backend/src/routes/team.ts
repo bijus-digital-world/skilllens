@@ -5,6 +5,7 @@ import { pool } from '../db/pool'
 import { authenticate, authorize } from '../middleware/auth'
 import { sanitizeString, sanitizeName, isValidEmail, isOneOf } from '../utils/validate'
 import { sendAccountCreatedEmail } from '../services/emailService'
+import { logAudit } from '../services/auditLog'
 
 const router = Router()
 
@@ -62,6 +63,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
     // Send credentials email
     sendAccountCreatedEmail(email, name, tempPassword, role).catch(() => {})
+    logAudit(req, 'user.created', 'user', result.rows[0].id, { email, role })
 
     res.status(201).json({
       ...result.rows[0],

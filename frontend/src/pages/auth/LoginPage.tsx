@@ -19,7 +19,11 @@ export function LoginPage() {
     setLoading(true)
     try {
       const res = await login(email, password)
-      navigate(res.user.role === 'admin' ? '/admin' : '/candidate')
+      if (res.user.mustChangePassword) {
+        navigate('/change-password')
+      } else {
+        navigate(res.user.role === 'admin' ? '/admin' : '/candidate')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {

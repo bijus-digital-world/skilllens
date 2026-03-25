@@ -1,6 +1,8 @@
 import { pool } from './pool'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
 
 async function migrate() {
   const client = await pool.connect()
@@ -47,6 +49,27 @@ async function migrate() {
         await client.query('ROLLBACK')
         throw err
       }
+    }
+
+    // Seed default admin if no admin exists
+    const adminCheck = await client.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1")
+    if (adminCheck.rows.length === 0) {
+      const defaultPassword = crypto.randomBytes(6).toString('base64url') // e.g. "aB3dE5fG"
+      const hash = await bcrypt.hash(defaultPassword, 12)
+      await client.query(
+        "INSERT INTO users (email, password_hash, name, role, must_change_password, is_self_registered) VALUES ($1, $2, $3, $4, $5, $6)",
+        ['admin@skilllens.com', hash, 'System Admin', 'admin', true, false]
+      )
+      console.log('')
+      console.log('  ╔══════════════════════════════════════════════════╗')
+      console.log('  ║         DEFAULT ADMIN ACCOUNT CREATED           ║')
+      console.log('  ╠══════════════════════════════════════════════════╣')
+      console.log(`  ║  Email:    admin@skilllens.com                   ║`)
+      console.log(`  ║  Password: ${defaultPassword.padEnd(38)}║`)
+      console.log('  ║                                                  ║')
+      console.log('  ║  ⚠ You must change this password on first login ║')
+      console.log('  ╚══════════════════════════════════════════════════╝')
+      console.log('')
     }
 
     console.log('Migrations complete')

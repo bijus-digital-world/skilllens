@@ -48,8 +48,24 @@ export function CandidateDashboard() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           {greeting()}, {user?.name?.split(' ')[0]}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">Here are your scheduled interviews</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {user?.isSelfRegistered ? 'Practice mode — try a mock interview to prepare' : 'Here are your scheduled interviews'}
+        </p>
       </div>
+
+      {/* Practice Mode Banner for self-registered */}
+      {user?.isSelfRegistered && (
+        <div className="flex items-start gap-3 rounded-xl border border-violet-200 bg-violet-50 p-4">
+          <BookOpen className="h-5 w-5 text-violet-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-violet-900">Practice Mode</p>
+            <p className="text-sm text-violet-700 mt-0.5">
+              You're in practice mode. You can take practice interviews to get familiar with the format.
+              Your actual interview will be scheduled by the hiring team — you'll receive an email with details.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-5 sm:grid-cols-3">

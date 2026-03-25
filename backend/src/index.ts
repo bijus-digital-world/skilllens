@@ -12,6 +12,7 @@ import dashboardRoutes from './routes/dashboard'
 import questionRoutes from './routes/questions'
 import profileRoutes from './routes/profiles'
 import suggestRoutes from './routes/suggest'
+import teamRoutes from './routes/team'
 import { setupInterviewSocket } from './services/interviewHandler'
 
 const app = express()
@@ -34,6 +35,7 @@ app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/questions', questionRoutes)
 app.use('/api/profiles', profileRoutes)
 app.use('/api/suggest', suggestRoutes)
+app.use('/api/team', teamRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

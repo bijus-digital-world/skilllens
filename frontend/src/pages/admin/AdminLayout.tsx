@@ -38,6 +38,7 @@ const navSections = [
     label: 'Configuration',
     items: [
       { to: '/admin/profiles', icon: Shield, label: 'Eval Profiles' },
+      { to: '/admin/team', icon: Users, label: 'Team' },
     ],
   },
   {

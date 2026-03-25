@@ -121,3 +121,84 @@ export async function sendEvaluationCompleteEmail(
 
   await sendEmail(adminEmail, `Evaluation Complete: ${candidateName} - ${jdTitle}`, html)
 }
+
+export async function sendAccountCreatedEmail(
+  email: string,
+  name: string,
+  tempPassword: string,
+  role: string
+): Promise<void> {
+  const loginUrl = `${config.clientOrigin}/poc3/login`
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2563eb; color: white; padding: 20px 24px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 20px;">SkillLens - Your Account is Ready</h1>
+      </div>
+      <div style="border: 1px solid #e2e8f0; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+        <p>Hi ${name},</p>
+        <p>An account has been created for you on SkillLens${role === 'admin' ? ' as an administrator' : ''}.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+          <tr><td style="padding: 8px 0; color: #64748b;">Email</td><td style="padding: 8px 0; font-weight: 600;">${email}</td></tr>
+          <tr><td style="padding: 8px 0; color: #64748b;">Temporary Password</td><td style="padding: 8px 0; font-weight: 600; font-family: monospace; font-size: 16px;">${tempPassword}</td></tr>
+        </table>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${loginUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+            Log In Now
+          </a>
+        </div>
+        <p style="color: #dc2626; font-size: 14px; font-weight: 600;">You will be asked to change your password on first login.</p>
+        <p style="color: #64748b; font-size: 14px; margin-top: 16px;">If you did not expect this email, you can safely ignore it.</p>
+      </div>
+    </div>
+  `
+
+  await sendEmail(email, 'Your SkillLens Account', html)
+}
+
+export async function sendInterviewInviteWithCredentialsEmail(
+  email: string,
+  name: string,
+  tempPassword: string,
+  jdTitle: string,
+  scheduledStart: string,
+  durationMinutes: number
+): Promise<void> {
+  const loginUrl = `${config.clientOrigin}/poc3/login`
+  const date = new Date(scheduledStart).toLocaleString('en-IN', {
+    dateStyle: 'full',
+    timeStyle: 'short',
+    timeZone: 'Asia/Kolkata',
+  })
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2563eb; color: white; padding: 20px 24px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 20px;">SkillLens - Interview Scheduled</h1>
+      </div>
+      <div style="border: 1px solid #e2e8f0; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+        <p>Hi ${name},</p>
+        <p>An interview has been scheduled for you. Here are the details:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+          <tr><td style="padding: 8px 0; color: #64748b;">Position</td><td style="padding: 8px 0; font-weight: 600;">${jdTitle}</td></tr>
+          <tr><td style="padding: 8px 0; color: #64748b;">Date & Time</td><td style="padding: 8px 0; font-weight: 600;">${date} IST</td></tr>
+          <tr><td style="padding: 8px 0; color: #64748b;">Duration</td><td style="padding: 8px 0; font-weight: 600;">${durationMinutes} minutes</td></tr>
+        </table>
+        <p style="font-weight: 600; margin-top: 20px;">Your Login Credentials:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 8px 0; background: #f8fafc; border-radius: 6px;">
+          <tr><td style="padding: 10px 12px; color: #64748b;">Email</td><td style="padding: 10px 12px; font-weight: 600;">${email}</td></tr>
+          <tr><td style="padding: 10px 12px; color: #64748b;">Password</td><td style="padding: 10px 12px; font-weight: 600; font-family: monospace; font-size: 16px;">${tempPassword}</td></tr>
+        </table>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${loginUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+            Log In & Join Interview
+          </a>
+        </div>
+        <p style="color: #dc2626; font-size: 14px; font-weight: 600;">You will be asked to set a new password on first login.</p>
+        <p style="color: #64748b; font-size: 14px; margin-top: 16px;">Good luck!</p>
+      </div>
+    </div>
+  `
+
+  await sendEmail(email, `Interview Scheduled: ${jdTitle}`, html)
+}

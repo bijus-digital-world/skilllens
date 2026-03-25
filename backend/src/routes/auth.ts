@@ -77,11 +77,11 @@ router.post('/register', authLimiter, async (req: Request, res: Response): Promi
       return
     }
 
-    // Hash password and create user
+    // Hash password and create user (self-registered)
     const passwordHash = await bcrypt.hash(password, 12)
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role, created_at',
-      [email, passwordHash, name, userRole]
+      'INSERT INTO users (email, password_hash, name, role, is_self_registered) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role, created_at',
+      [email, passwordHash, name, userRole, true]
     )
 
     const user = result.rows[0]
@@ -121,7 +121,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response): Promise<
     }
 
     const result = await pool.query(
-      'SELECT id, email, password_hash, name, role, created_at FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, must_change_password, created_at FROM users WHERE email = $1',
       [email]
     )
 
@@ -148,11 +148,34 @@ router.post('/login', authLimiter, async (req: Request, res: Response): Promise<
         name: user.name,
         role: user.role,
         createdAt: user.created_at,
+        mustChangePassword: user.must_change_password,
       },
       message: 'Login successful',
     })
   } catch (err) {
     console.error('Login error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// POST /api/auth/change-password — change password (used for forced change and voluntary)
+router.post('/change-password', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const password = req.body.password
+    if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+      res.status(400).json({ message: 'Password must be 8-128 characters' })
+      return
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12)
+    await pool.query(
+      'UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2',
+      [passwordHash, req.user!.userId]
+    )
+
+    res.json({ message: 'Password changed successfully' })
+  } catch (err) {
+    console.error('Change password error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 })
@@ -177,7 +200,7 @@ router.post('/logout', (_req: Request, res: Response) => {
 router.get('/me', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      'SELECT id, email, name, role, created_at FROM users WHERE id = $1',
+      'SELECT id, email, name, role, is_self_registered, created_at FROM users WHERE id = $1',
       [req.user!.userId]
     )
 
@@ -192,6 +215,7 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
       email: user.email,
       name: user.name,
       role: user.role,
+      isSelfRegistered: user.is_self_registered,
       createdAt: user.created_at,
     })
   } catch (err) {

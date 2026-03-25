@@ -8,6 +8,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
+import { ChangePasswordPage } from '@/pages/auth/ChangePasswordPage'
 import { AdminLayout } from '@/pages/admin/AdminLayout'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { JobDescriptionsPage } from '@/pages/admin/JobDescriptionsPage'
@@ -24,6 +25,7 @@ import { ComparePage } from '@/pages/admin/ComparePage'
 import { ProfilesPage } from '@/pages/admin/ProfilesPage'
 import { JdDetailPage } from '@/pages/admin/JdDetailPage'
 import { LiveMonitorPage } from '@/pages/admin/LiveMonitorPage'
+import { TeamPage } from '@/pages/admin/TeamPage'
 import { PrepRoom } from '@/pages/candidate/PrepRoom'
 import { FeedbackPage } from '@/pages/candidate/FeedbackPage'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -52,6 +54,7 @@ function AppRoutes() {
       <Route path="/register" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/candidate'} /> : <RegisterPage />} />
       <Route path="/forgot-password" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/candidate'} /> : <ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/change-password" element={user ? <ChangePasswordPage /> : <Navigate to="/login" />} />
 
       <Route element={<Layout />}>
         <Route
@@ -74,6 +77,7 @@ function AppRoutes() {
           <Route path="profiles" element={<ProfilesPage />} />
           <Route path="questions" element={<QuestionsPage />} />
           <Route path="questions/:id" element={<QuestionSetDetailPage />} />
+          <Route path="team" element={<TeamPage />} />
         </Route>
 
         <Route

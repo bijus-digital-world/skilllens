@@ -5,6 +5,7 @@ export interface User {
   email: string
   name: string
   role: UserRole
+  isSelfRegistered?: boolean
   createdAt: string
 }
 
@@ -21,6 +22,6 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  user: User
+  user: User & { mustChangePassword?: boolean }
   message: string
 }

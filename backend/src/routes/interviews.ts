@@ -3,7 +3,9 @@ import { pool } from '../db/pool'
 import { authenticate, authorize } from '../middleware/auth'
 import { generateReport } from '../services/reportGenerator'
 import type { EvaluationResult } from '../services/evaluation'
-import { sendInterviewScheduledEmail } from '../services/emailService'
+import { sendInterviewScheduledEmail, sendInterviewInviteWithCredentialsEmail } from '../services/emailService'
+import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
 import { parsePagination, paginatedResponse } from '../utils/pagination'
 import { isValidUUID, validateInt, isOneOf } from '../utils/validate'
 import { pickInterviewerName } from '../services/interviewHandler'
@@ -60,16 +62,29 @@ router.post('/', authorize('admin'), async (req: Request, res: Response): Promis
 
     // Send email notification (async, don't block response)
     pool.query(
-      'SELECT u.email, u.name FROM users u WHERE u.id = $1',
+      'SELECT u.email, u.name, u.must_change_password FROM users u WHERE u.id = $1',
       [candidateId]
     ).then(async (r) => {
       if (r.rows.length > 0) {
         const jdResult = await pool.query('SELECT title FROM job_descriptions WHERE id = $1', [jdId])
-        const jdTitle = jdResult.rows[0]?.title || 'Mock Interview'
-        sendInterviewScheduledEmail(
-          r.rows[0].email, r.rows[0].name, jdTitle,
-          start.toISOString(), duration
-        )
+        const jdTitle = jdResult.rows[0]?.title || 'Interview'
+
+        if (r.rows[0].must_change_password) {
+          // New candidate — generate fresh password and send credentials
+          const tempPassword = crypto.randomBytes(6).toString('base64url')
+          const hash = await bcrypt.hash(tempPassword, 12)
+          await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, candidateId])
+          sendInterviewInviteWithCredentialsEmail(
+            r.rows[0].email, r.rows[0].name, tempPassword, jdTitle,
+            start.toISOString(), duration
+          )
+        } else {
+          // Existing candidate — just send schedule notification
+          sendInterviewScheduledEmail(
+            r.rows[0].email, r.rows[0].name, jdTitle,
+            start.toISOString(), duration
+          )
+        }
       }
     }).catch(() => {})
 
